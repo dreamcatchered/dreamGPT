@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>dreamAI — Ваш интеллектуальный помощник</title>
+    
+    <!-- SEO & Meta -->
+    <meta name="description" content="Минималистичный ИИ-интерфейс для работы с мощными моделями.">
+    <meta property="og:title" content="dreamAI">
+    <meta property="og:description" content="Ваш персональный ИИ с памятью и рассуждением">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="https://api.dreampartners.online/icons/ai/favicon.ico">
+    <link rel="apple-touch-icon" href="https://api.dreampartners.online/icons/ai/apple-touch-icon.png">
+    
+    <!-- Tailwind CSS CDN (production warning suppressed) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Suppress Tailwind CDN production warning
+        if (typeof console !== 'undefined' && console.warn) {
+            const originalWarn = console.warn;
+            console.warn = function(...args) {
+                if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) {
+                    return; // Suppress this specific warning
+                }
+                originalWarn.apply(console, args);
+            };
+        }
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        border: "#efefef",
+                        notion: { bg: "#ffffff", secondary: "#f9f9f9", hover: "#f1f1f1" }
+                    },
+                    borderRadius: { '2xl': '24px' },
+                    animation: { 'fade-in': 'fadeIn 0.3s ease-out' }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+        html { overflow-x: hidden; }
+        * { word-wrap: break-word; overflow-wrap: break-word; }
+        
+        #app-loader {
+            position: fixed;
+            inset: 0;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out, visibility 0.5s;
+        }
+        #app-loader.hidden { opacity: 0; visibility: hidden; }
+
+        .loader-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Quantum Loader */
+        .quantum-spinner {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            perspective: 800px;
+            position: relative;
+        }
+        
+        .quantum-spinner .ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+            --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(3px + var(--tw-ring-offset-width)) rgb(0 0 0 / 27%);
+            box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+        }
+
+        .quantum-spinner .ring:nth-child(1) {
+            transform: rotateX(35deg) rotateY(-45deg);
+            animation: rotate1 1.5s linear infinite;
+        }
+        
+        .quantum-spinner .ring:nth-child(2) {
+            transform: rotateX(50deg) rotateY(10deg);
+            animation: rotate2 1.5s linear infinite;
+        }
+        
+        .quantum-spinner .ring:nth-child(3) {
+            transform: rotateX(35deg) rotateY(55deg);
+            animation: rotate3 1.5s linear infinite;
+        }
+        
+        .quantum-spinner .core {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 16px;
+            height: 16px;
+            background: #000000;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            animation: pulse-core 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes rotate1 { to { transform: rotateX(35deg) rotateY(-45deg) rotate(360deg); } }
+        @keyframes rotate2 { to { transform: rotateX(50deg) rotateY(10deg) rotate(360deg); } }
+        @keyframes rotate3 { to { transform: rotateX(35deg) rotateY(55deg) rotate(360deg); } }
+        @keyframes pulse-core { 
+            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.7; }
+            100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d0d0d0; }
+
+        #sidebar { 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            z-index: 50;
+        }
+        @media (max-width: 768px) {
+            #sidebar { position: fixed; transform: translateX(-100%); height: 100dvh; }
+            #sidebar.open { transform: translateX(0); }
+        }
+
+        .bento-card {
+            background: #ffffff;
+            border: 1px solid #efefef;
+            padding: 1rem;
+            border-radius: 18px;
+            transition: all 0.2s;
+        }
+
+        .notion-input {
+            box-shadow: 0 2px 14px -4px rgba(0,0,0,0.05);
+            border: 1px solid #efefef;
+        }
+
+        pre code { border-radius: 12px; font-size: 0.85em; background: #fbfbfb !important; border: 1px solid #eee; padding: 1.25rem !important; }
+        
+        .code-block-wrapper { position: relative; margin: 1.5rem 0; }
+        .copy-button {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            padding: 0.5rem;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            z-index: 10;
+        }
+        .copy-button:hover { background: #f9f9f9; color: black; border-color: #ddd; }
+        .copy-button.copied { color: #10b981; border-color: #10b981; }
+
+        .thought-content { transition: max-height 0.3s ease; overflow: hidden; }
+        .thought-content.collapsed { max-height: 0; margin: 0; padding: 0; opacity: 0; }
+
+        .typing-cursor::after { content: ''; } 
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        #error-notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #ff4d4f;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            z-index: 9999;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        #error-notification.show { transform: translateX(-50%) translateY(0); }
+
+        #memory-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            z-index: 9999;
+            transform: translateY(100px);
+                opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #memory-notification.show { transform: translateY(0); opacity: 1; }
+
+        #video-processing {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .video-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #e5e7eb;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 4px;
+        }
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body class="bg-white text-[#1a1a1a] flex h-screen overflow-hidden">
+
+    <!-- Лоадер -->
+    <div id="app-loader">
+        <div class="flex flex-col items-center gap-8">
+            <div class="loader-container">
+                <div class="quantum-spinner">
+                    <div class="ring"></div>
+                    <div class="ring"></div>
+                    <div class="ring"></div>
+                    <div class="core"></div>
+                </div>
+            </div>
+            <span class="text-xs font-bold uppercase tracking-[0.4em] text-black/80 animate-pulse">dreamAI</span>
+        </div>
+    </div>
+
+    <!-- Уведомление об ошибке -->
+    <div id="error-notification">
+        <div class="flex items-center gap-3">
+            <i data-lucide="alert-circle" class="w-5 h-5"></i>
+            <span id="error-text">Произошла ошибка</span>
+        </div>
+    </div>
+
+    <!-- Уведомление о памяти -->
+    <div id="memory-notification">
+        <i data-lucide="brain" class="w-5 h-5"></i>
+        <span>Память обновлена</span>
+    </div>
+
+    <!-- Оверлей для мобилок -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/20 backdrop-blur-sm hidden z-40 transition-opacity" onclick="toggleSidebar(false)"></div>
+
+    <!-- Сайдбар -->
+    <aside id="sidebar" class="w-[280px] border-r border-border bg-notion-secondary flex flex-col shrink-0">
+        <div class="p-5 flex flex-col h-full">
+            <div class="flex items-center gap-3 mb-8 px-2">
+                <img src="https://api.dreampartners.online/icons/ai/logo.svg" class="w-8 h-8 rounded-lg shadow-sm" alt="Logo">
+                <span class="font-bold tracking-tight text-lg">dreamAI</span>
+            </div>
+
+            <button onclick="newChat()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-border rounded-2xl text-sm font-medium hover:bg-notion-hover transition-all mb-6 shadow-sm">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-gray-500"></i>
+                Новый чат
+            </button>
+            
+            <div id="chats-list" class="flex-1 overflow-y-auto space-y-1 pr-1">
+                <!-- Скелетон загрузки -->
+                <div id="history-skeleton">
+                    <div class="px-3 py-2.5 flex items-center gap-3">
+                        <div class="w-4 h-4 rounded skeleton"></div>
+                        <div class="flex-1 h-4 skeleton"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-border mt-auto space-y-1">
+                <button onclick="toggleSettings(true)" class="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-notion-hover rounded-xl transition-all text-sm font-medium">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4 text-gray-400"></i>
+                    Настройки
+                </button>
+                <div id="user-profile-btn" class="flex items-center gap-3 px-3 py-2.5 hover:bg-notion-hover rounded-xl transition-all text-sm font-medium cursor-pointer" onclick="openProfileModal()">
+                    <div id="sidebar-avatar" class="w-6 h-6 rounded-full bg-zinc-200 flex items-center justify-center overflow-hidden">
+                        <i data-lucide="user" class="w-3.5 h-3.5 text-gray-500"></i>
+                    </div>
+                    <span id="sidebar-username" class="truncate">{{ session['user'].get('username', 'User') if session.get('user') else 'User' }}</span>
+                </div>
+                <a href="/logout" class="flex items-center gap-3 px-3 py-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-all text-sm font-medium">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    Выход
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Основной контент -->
+    <main class="flex-1 flex flex-col relative h-full bg-white">
+        <!-- Хедер -->
+        <header class="h-16 flex items-center justify-between px-2 md:px-4 border-b border-border/50 sticky top-0 bg-white/80 backdrop-blur-md z-30">
+            <div class="flex items-center gap-2 min-w-0">
+                <button onclick="toggleSidebar(true)" class="md:hidden p-2 hover:bg-notion-hover rounded-xl shrink-0">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
+                </button>
+                <h1 id="chat-title" class="font-semibold text-base md:text-xl truncate hidden md:block max-w-[400px]">dreamAI</h1>
+            </div>
+            
+            <div class="flex items-center gap-1 shrink-0 ml-auto">
+                <div class="relative" id="model-selector-container">
+                    <button onclick="toggleModelDropdown()" id="current-model-btn" class="flex items-center gap-1 px-3 py-2 hover:bg-notion-hover rounded-xl transition-all text-sm font-bold border border-transparent hover:border-border whitespace-nowrap bg-zinc-50 md:bg-transparent">
+                        <span id="current-model-name" class="truncate max-w-[120px] md:max-w-none">Загрузка...</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 shrink-0"></i>
+                    </button>
+                    <div id="model-dropdown" class="absolute top-full right-0 mt-2 w-72 bg-white border border-border rounded-2xl shadow-2xl hidden z-[100] overflow-hidden">
+                        <div class="p-2 max-h-[400px] overflow-y-auto" id="models-list">
+                            <!-- Список моделей -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Окно чата -->
+        <div id="chat-window" class="flex-1 overflow-y-auto px-4">
+            <div class="max-w-3xl mx-auto py-4">
+                <!-- Welcome Screen -->
+                <div id="welcome-screen" class="flex flex-col items-center justify-center text-center space-y-4 py-4 animate-fade-in">
+                    <img src="https://illustrations.popsy.co/gray/creative-work.svg" alt="Work" class="w-32 h-32 grayscale">
+                    <div class="space-y-1">
+                        <h2 class="text-2xl font-bold tracking-tight">Чем могу помочь?</h2>
+                        <p class="text-gray-400 max-w-md text-sm">Задайте вопрос, загрузите изображение или попросите написать код.</p>
+                    </div>
+                    
+                    <div id="welcome-topics" class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full mt-4">
+                        <!-- Сюда рендерятся подсказки -->
+                    </div>
+                </div>
+                
+                <div class="space-y-8" id="messages-container">
+                    <!-- Сюда рендерятся сообщения -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Поле ввода -->
+        <div class="w-full max-w-3xl mx-auto px-4 pb-4 md:pb-8 pt-2">
+            <div id="file-preview-container" class="flex flex-wrap gap-2 mb-3"></div>
+            <div class="notion-input bg-white rounded-[24px] p-2 transition-all focus-within:ring-2 ring-black/5">
+                <textarea id="user-input" rows="1" 
+                    class="w-full bg-transparent border-none focus:ring-0 outline-none resize-none py-3 px-4 text-base placeholder-gray-400 min-h-[52px]"
+                    placeholder="Спросите о чем угодно..."></textarea>
+                
+                <div class="flex justify-between items-center px-2 pb-1">
+                    <div class="flex items-center gap-1">
+                        <button onclick="document.getElementById('file-input').click()" class="p-2.5 hover:bg-notion-hover rounded-xl text-gray-400 hover:text-black transition-colors">
+                            <i data-lucide="paperclip" class="w-5 h-5"></i>
+                            <input type="file" id="file-input" class="hidden" multiple onchange="handleFileUpload(event)">
+        </button>
+                    </div>
+                    <div id="action-btns" class="flex items-center gap-2">
+                        <button id="send-btn" onclick="askAI()" class="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-2xl hover:bg-zinc-800 transition-all disabled:bg-gray-100 disabled:text-gray-300 shadow-sm opacity-50 pointer-events-none">
+                            <span class="text-sm font-semibold">Отправить</span>
+                            <i data-lucide="arrow-up" class="w-4 h-4"></i>
+                        </button>
+                        <button id="stop-btn" onclick="stopGeneration()" class="hidden flex items-center gap-2 bg-white border border-border text-black px-5 py-2.5 rounded-2xl hover:bg-gray-50 transition-all shadow-sm">
+                            <span class="text-sm font-semibold">Остановить</span>
+                            <i data-lucide="square" class="w-3.5 h-3.5 fill-black"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Настройки (Bento-стиль) -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-4" onclick="if(event.target === this) toggleSettings(false)">
+        <div class="bg-notion-secondary w-full max-w-3xl rounded-[32px] p-8 shadow-2xl overflow-y-auto max-h-[90dvh] animate-fade-in relative">
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h3 class="text-2xl font-bold">Параметры ИИ</h3>
+                    <p class="text-sm text-gray-400">Настройте поведение нейросети и профиля</p>
+                </div>
+                <button onclick="toggleSettings(false)" class="p-2 hover:bg-gray-200 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+        </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Bento Block: Model Info -->
+                <div class="bento-card col-span-1 md:col-span-2">
+                    <label class="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-3">Текущая модель</label>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-black text-white flex items-center justify-center font-bold" id="settings-model-icon">AI</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-bold truncate" id="settings-model-name">Название модели</div>
+                            <div class="text-xs text-gray-400 truncate" id="settings-model-desc">Описание модели</div>
+            </div>
+        </div>
+                </div>
+
+                <!-- Bento Block: System Prompt -->
+                <div class="bento-card col-span-1 md:col-span-2">
+                    <label class="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-3">Системная инструкция</label>
+                    <textarea id="param-system" rows="3" class="w-full bg-notion-secondary px-4 py-3 rounded-xl border border-border outline-none text-sm resize-none focus:border-black transition-colors" placeholder="Напр.: Ты помощник-программист..."></textarea>
+                </div>
+
+                <!-- Bento Block: Prompt Template -->
+                <div class="bento-card col-span-1 md:col-span-2">
+                    <label class="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-3">Шаблон промпта</label>
+                    <textarea id="param-template" rows="2" class="w-full bg-notion-secondary px-4 py-3 rounded-xl border border-border outline-none text-sm resize-none focus:border-black transition-colors" placeholder="Инструкция для каждого сообщения..."></textarea>
+    </div>
+
+                <!-- Bento Block: Temperature -->
+                <div class="bento-card">
+                    <div class="flex justify-between mb-4">
+                        <label class="text-xs font-bold uppercase tracking-wider text-gray-400">Temperature</label>
+                        <span id="temp-val" class="text-sm font-mono font-bold">0.7</span>
+                </div>
+                    <input type="range" id="param-temp" min="0" max="1" step="0.1" value="0.7" class="w-full accent-black cursor-pointer" oninput="document.getElementById('temp-val').innerText = this.value">
+            </div>
+
+                <!-- Bento Block: Memory -->
+                <div class="bento-card flex items-center justify-between">
+                    <div>
+                        <label class="text-xs font-bold uppercase tracking-wider text-gray-400 block">Память ассистента</label>
+                        <p class="text-[10px] text-gray-400 mt-1">Запоминать важные факты о вас</p>
+                </div>
+                    <div onclick="toggleMemoryToggle()" class="w-12 h-6 bg-zinc-200 rounded-full relative cursor-pointer transition-all" id="memory-toggle-bg">
+                        <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 transition-all shadow-sm" id="memory-toggle-dot"></div>
+            </div>
+                </div>
+
+                <!-- Bento Block: Notifications -->
+                <div class="bento-card flex items-center justify-between">
+                    <div>
+                        <label class="text-xs font-bold uppercase tracking-wider text-gray-400 block">Уведомления</label>
+                        <p class="text-[10px] text-gray-400 mt-1">О завершении долгих задач</p>
+                </div>
+                    <div onclick="toggleNotifications()" class="w-12 h-6 bg-zinc-200 rounded-full relative cursor-pointer transition-all" id="notif-toggle-bg">
+                        <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 transition-all shadow-sm" id="notif-toggle-dot"></div>
+                </div>
+                    </div>
+
+                <!-- Bento Block: Preferred Model -->
+                <div class="bento-card">
+                    <label class="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-3">Модель по умолчанию</label>
+                    <select id="param-preferred-model" onchange="syncModelWithSettings(this.value)" class="w-full bg-notion-secondary px-3 py-2 rounded-xl border border-border outline-none text-sm"></select>
+                </div>
+        </div>
+
+            <button onclick="saveSettings()" class="w-full bg-black text-white py-4 rounded-2xl font-bold mt-8 hover:bg-zinc-800 transition-all shadow-lg active:scale-[0.98]">
+                Применить настройки
+                    </button>
+                </div>
+            </div>
+
+    <!-- Модалка удаления -->
+    <div id="delete-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-[70] flex items-center justify-center p-4" onclick="if(event.target === this) closeDeleteModal()">
+        <div class="bg-white w-full max-w-sm rounded-[32px] p-8 shadow-2xl animate-fade-in text-center">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="trash-2" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Удалить чат?</h3>
+            <p class="text-gray-400 text-sm mb-8">Это действие нельзя будет отменить. История сообщений будет удалена навсегда.</p>
+            <div class="flex gap-3">
+                <button onclick="closeDeleteModal()" class="flex-1 px-6 py-3.5 rounded-2xl font-bold hover:bg-gray-100 transition-all text-sm">Отмена</button>
+                <button id="confirm-delete-btn" class="flex-1 px-6 py-3.5 bg-black text-white rounded-2xl font-bold hover:bg-zinc-800 transition-all text-sm">Удалить</button>
+            </div>
+            </div>
+        </div>
+
+    <!-- Модалка профиля -->
+    <div id="profile-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-4" onclick="if(event.target === this) closeProfileModal()">
+        <div class="bg-white w-full max-w-lg rounded-[32px] p-8 shadow-2xl animate-fade-in">
+            <div class="flex items-center justify-between mb-8">
+                <h3 class="text-2xl font-bold">Профиль пользователя</h3>
+                <button onclick="closeProfileModal()" class="p-2 hover:bg-gray-100 rounded-full transition-colors"><i data-lucide="x" class="w-6 h-6"></i></button>
+                </div>
+            
+            <div class="space-y-6">
+                <div class="flex flex-col items-center gap-4">
+                    <div class="relative group cursor-pointer" onclick="document.getElementById('avatar-input').click()">
+                        <div id="profile-avatar-display" class="w-24 h-24 rounded-full bg-zinc-100 flex items-center justify-center overflow-hidden border-2 border-border group-hover:border-black transition-all">
+                            <i data-lucide="user" class="w-10 h-10 text-gray-400"></i>
+                </div>
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i data-lucide="camera" class="w-6 h-6 text-white"></i>
+                    </div>
+                        <input type="file" id="avatar-input" class="hidden" accept="image/*" onchange="uploadAvatar(event)">
+                    </div>
+        </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-2">Ваше имя</label>
+                        <input type="text" id="profile-name" class="w-full bg-notion-secondary px-4 py-3 rounded-xl border border-border outline-none focus:border-black transition-colors" placeholder="Как вас называть?">
+                </div>
+                    
+                    <div>
+                        <label class="text-xs font-bold uppercase tracking-wider text-gray-400 block mb-2">Память (сохраненные факты)</label>
+                        <div id="memory-list" class="space-y-2 max-h-40 overflow-y-auto pr-2">
+                            <!-- Факты из памяти -->
+            </div>
+            </div>
+            </div>
+            </div>
+
+            <button onclick="saveProfile()" class="w-full bg-black text-white py-4 rounded-2xl font-bold mt-8 hover:bg-zinc-800 transition-all shadow-lg">
+                Сохранить изменения
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- КОНФИГУРАЦИЯ И СОСТОЯНИЕ ---
+        lucide.createIcons();
+        
+        // Настройка marked для кнопок копирования кода
+        const renderer = new marked.Renderer();
+        const originalCodeRenderer = renderer.code.bind(renderer);
+        renderer.code = (code, language, escaped) => {
+            const html = originalCodeRenderer(code, language, escaped);
+            return `
+                <div class="code-block-wrapper group">
+                    <button class="copy-button opacity-0 group-hover:opacity-100 transition-opacity" onclick="copyCode(this)">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                        <span>Копировать</span>
+                    </button>
+                    ${html}
+                </div>`;
+        };
+        marked.setOptions({ renderer });
+        
+        async function copyCode(btn) {
+            const codeBlock = btn.nextElementSibling || btn.parentElement.querySelector('code');
+            const code = codeBlock ? codeBlock.innerText : '';
+            try {
+                await navigator.clipboard.writeText(code);
+                const span = btn.querySelector('span');
+                const oldText = span.innerText;
+                btn.classList.add('copied');
+                span.innerText = 'Скопировано!';
+                lucide.createIcons();
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    span.innerText = oldText;
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+            }
+        }
+        
+        let currentChatId = null;
+        let isGenerating = false;
+        let modelsData = null;
+        let currentModelValue = 'gemma3:4b'; // Will be validated against available models
+        let userProfile = null;
+        let selectedFiles = []; // { file, type, url, name }
+        let abortController = null;
+        let isAutoScrolling = true;
+        let memoryEnabled = true;
+        let notificationsEnabled = false;
+        window.videoMonitorInterval = null;
+
+        const chatWindow = document.getElementById('chat-window');
+        const messagesContainer = document.getElementById('messages-container');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const chatTitle = document.getElementById('chat-title');
+        const welcomeScreen = document.getElementById('welcome-screen');
+
+        // --- ИНИЦИАЛИЗАЦИЯ ---
+        async function init() {
+            await loadModels();
+            await loadProfile();
+            await loadChats();
+            await loadWelcomeTopics();
+            
+            const pathParts = window.location.pathname.split('/');
+            if (pathParts[2]) {
+                await selectChat(pathParts[2]);
+            } else {
+                newChat();
+            }
+
+                    setTimeout(() => {
+                document.getElementById('app-loader').classList.add('hidden');
+            }, 500);
+        }
+
+        // --- УПРАВЛЕНИЕ ЧАТАМИ ---
+        async function loadChats() {
+            try {
+                const res = await fetch('/api/chats');
+                const chats = await res.json();
+                const list = document.getElementById('chats-list');
+                const skeleton = document.getElementById('history-skeleton');
+                if (skeleton) skeleton.style.display = 'none';
+                
+                list.innerHTML = chats.map(chat => `
+                    <div class="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm transition-all cursor-pointer group ${currentChatId == chat.id ? 'bg-zinc-200 font-semibold' : 'hover:bg-notion-hover'}" onclick="selectChat('${chat.id}')">
+                        <div class="flex items-center gap-3 truncate flex-1 min-w-0">
+                            <i data-lucide="message-square" class="w-4 h-4 text-gray-400 shrink-0"></i>
+                            <span class="truncate chat-title-text" id="sidebar-title-${chat.id}">${chat.title || 'Новый чат'}</span>
+                            <input type="text" id="sidebar-input-${chat.id}" class="hidden w-full bg-transparent outline-none border-none p-0 text-sm font-semibold" 
+                                value="${chat.title || 'Новый чат'}" 
+                                onclick="event.stopPropagation()" 
+                                onblur="saveSidebarTitle('${chat.id}')" 
+                                onkeydown="if(event.key==='Enter') saveSidebarTitle('${chat.id}')">
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button onclick="event.stopPropagation(); editSidebarTitle('${chat.id}')" class="opacity-0 group-hover:opacity-100 p-1 hover:text-black transition-all">
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5 text-gray-400"></i>
+                            </button>
+                            <button onclick="event.stopPropagation(); openDeleteModal('${chat.id}')" class="opacity-0 group-hover:opacity-100 p-1 hover:text-red-500 transition-all">
+                                <i data-lucide="x" class="w-3.5 h-3.5 text-gray-400"></i>
+                            </button>
+                        </div>
+                        </div>
+                    `).join('');
+                lucide.createIcons();
+            } catch (e) { console.error("Error loading chats", e); }
+        }
+
+        function editSidebarTitle(id) {
+            const text = document.getElementById(`sidebar-title-${id}`);
+            const input = document.getElementById(`sidebar-input-${id}`);
+            text.classList.add('hidden');
+            input.classList.remove('hidden');
+            input.focus();
+            input.select();
+        }
+
+        async function saveSidebarTitle(id) {
+            const text = document.getElementById(`sidebar-title-${id}`);
+            const input = document.getElementById(`sidebar-input-${id}`);
+            const newTitle = input.value.trim();
+            
+            if (newTitle && newTitle !== text.innerText) {
+                text.innerText = newTitle;
+                await fetch(`/api/chats/${id}/title`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({title: newTitle})
+                });
+                if (id === currentChatId) chatTitle.innerText = newTitle;
+            }
+            
+            text.classList.remove('hidden');
+            input.classList.add('hidden');
+        }
+
+        async function selectChat(id) {
+            if (isGenerating) return;
+            currentChatId = id;
+            window.history.pushState(null, '', `/chat/${id}`);
+            toggleSidebar(false);
+            welcomeScreen.style.display = 'none';
+            messagesContainer.innerHTML = '<div class="py-20 text-center animate-pulse text-gray-400 text-sm">Загрузка сообщений...</div>';
+            
+            try {
+                const res = await fetch(`/api/chats/${id}/messages`);
+                const messages = await res.json();
+                messagesContainer.innerHTML = '';
+                
+                // Get chat title and model
+                const chatsRes = await fetch('/api/chats');
+                const chats = await chatsRes.json();
+                const currentChat = chats.find(c => c.id == id);
+                if (currentChat) {
+                    chatTitle.innerText = currentChat.title || 'dreamAI';
+                    // Set model from chat, but validate it exists in available models
+                    // Load models FIRST to validate
+                    await loadModels();
+                    const chatModel = currentChat.model || userProfile?.preferred_model || 'gemma3:4b';
+                    // Validate that model exists in available models
+                    if (modelsData && modelsData.models[chatModel]) {
+                        currentModelValue = chatModel;
+                    } else {
+                        // Use preferred from API or fallback to gemma3:4b
+                        currentModelValue = modelsData?.preferred || 'gemma3:4b';
+                    }
+                    updateModelUI();
+                }
+
+                if (Array.isArray(messages)) {
+                    messages.forEach(msg => {
+                        const ui = appendMessage(msg.role, msg.content, msg.images || [], msg.documents || []);
+                        // For AI messages, ensure code is highlighted and icons are created
+                        if (msg.role === 'ai' && ui && ui.content) {
+                            ui.content.querySelectorAll('pre code').forEach(el => {
+                                if (!el.dataset.highlighted) {
+                                    hljs.highlightElement(el);
+                                    el.dataset.highlighted = 'true';
+                                }
+                            });
+                            lucide.createIcons();
+                        }
+                    });
+                }
+                loadChats();
+            } catch (e) { console.error("Error loading messages", e); }
+        }
+
+        async function newChat() {
+            if (isGenerating) return;
+            currentChatId = 'chat_' + Math.random().toString(36).substr(2, 9);
+            window.history.pushState(null, '', '/');
+            messagesContainer.innerHTML = '';
+            welcomeScreen.style.display = 'flex';
+            chatTitle.innerText = 'dreamAI';
+            // Set default model - validate it exists in available models
+            await loadModels();
+            const preferredModel = userProfile?.preferred_model || modelsData?.preferred || 'gemma3:4b';
+            // Validate that model exists in available models
+            if (modelsData && modelsData.models[preferredModel]) {
+                currentModelValue = preferredModel;
+            } else {
+                currentModelValue = modelsData?.preferred || 'gemma3:4b';
+            }
+            updateModelUI();
+            loadChats();
+        }
+
+        async function deleteChat(id) {
+            await fetch(`/api/chats/${id}`, {
+                method: 'DELETE'
+            });
+            if (currentChatId === id) newChat(); else loadChats();
+        }
+
+        // --- МОДЕЛИ ---
+        async function loadModels() {
+            try {
+                const res = await fetch('/api/models');
+                modelsData = await res.json();
+                const list = document.getElementById('models-list');
+                const prefSelect = document.getElementById('param-preferred-model');
+                
+                const allModels = modelsData.models_order;
+                list.innerHTML = allModels.map(m => {
+                    const info = modelsData.models[m] || { name: m, description: '' };
+                    const isActive = m === currentModelValue;
+                    return `
+                        <div class="p-3 rounded-xl hover:bg-notion-hover cursor-pointer transition-all ${isActive ? 'bg-zinc-100 border-zinc-200' : 'border-transparent'} border" onclick="selectModel('${m}')">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-bold text-sm">${info.name}</span>
+                                ${isActive ? '<i data-lucide="check" class="w-3.5 h-3.5 text-black"></i>' : ''}
+                            </div>
+                            <p class="text-xs text-gray-500 leading-tight">${info.description}</p>
+                        </div>
+                    `;
+                }).join('');
+
+                prefSelect.innerHTML = allModels.map(m => `<option value="${m}">${modelsData.models[m]?.name || m}</option>`).join('');
+                
+                updateModelUI();
+                lucide.createIcons();
+            } catch (e) { console.error("Error loading models", e); }
+        }
+
+        function selectModel(m) {
+            currentModelValue = m;
+            updateModelUI();
+            toggleModelDropdown(false);
+            loadModels(); // Refresh list to show checkmark
+        }
+
+        function updateModelUI() {
+            const nameEl = document.getElementById('current-model-name');
+            if (modelsData && modelsData.models[currentModelValue]) {
+                nameEl.innerText = modelsData.models[currentModelValue].name;
+                document.getElementById('settings-model-name').innerText = modelsData.models[currentModelValue].name;
+                document.getElementById('settings-model-desc').innerText = modelsData.models[currentModelValue].description;
+            } else {
+                nameEl.innerText = currentModelValue;
+            }
+        }
+
+        function toggleModelDropdown(show) {
+            const dd = document.getElementById('model-dropdown');
+            if (show === undefined) show = dd.classList.contains('hidden');
+            if (show) dd.classList.remove('hidden'); else dd.classList.add('hidden');
+        }
+
+        // --- ПРОФИЛЬ И ПАМЯТЬ ---
+        async function loadProfile() {
+            try {
+                const res = await fetch('/api/profile');
+                userProfile = await res.json();
+                document.getElementById('sidebar-username').innerText = userProfile.custom_name || userProfile.username || 'User';
+                if (userProfile.avatar_url) {
+                    document.getElementById('sidebar-avatar').innerHTML = `<img src="${userProfile.avatar_url}" class="w-full h-full object-cover">`;
+                    document.getElementById('profile-avatar-display').innerHTML = `<img src="${userProfile.avatar_url}" class="w-full h-full object-cover">`;
+                }
+                document.getElementById('profile-name').value = userProfile.custom_name || '';
+                document.getElementById('param-system').value = userProfile.system_prompt || '';
+                document.getElementById('param-template').value = userProfile.prompt_template || '';
+                document.getElementById('param-temp').value = userProfile.temperature || 0.7;
+                document.getElementById('temp-val').innerText = userProfile.temperature || 0.7;
+                // Validate preferred model exists in available models
+                const preferredModel = userProfile.preferred_model || modelsData?.preferred || 'gemma3:4b';
+                const validPreferredModel = (modelsData && modelsData.models[preferredModel]) ? preferredModel : (modelsData?.preferred || 'gemma3:4b');
+                document.getElementById('param-preferred-model').value = validPreferredModel;
+                
+                // Only sync currentModelValue if we are in a truly NEW chat (no messages)
+                if (messagesContainer.children.length === 0) {
+                    currentModelValue = validPreferredModel;
+                    updateModelUI();
+                }
+                
+                memoryEnabled = userProfile.memory_enabled !== false;
+                notificationsEnabled = userProfile.notifications_enabled === true;
+                
+                updateMemoryToggleUI();
+                updateNotificationsToggleUI();
+                updateMemoryUI();
+            } catch (e) { console.error("Error loading profile", e); }
+        }
+
+        function updateMemoryUI() {
+            const list = document.getElementById('memory-list');
+            if (userProfile.memory && userProfile.memory.length > 0) {
+                list.innerHTML = userProfile.memory.map(m => `
+                    <div class="flex items-center justify-between p-2 bg-notion-secondary rounded-lg group">
+                        <span class="text-xs truncate flex-1">${m.text}</span>
+                        <button onclick="deleteMemory(${m.id})" class="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all">
+                            <i data-lucide="x" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+                    } else {
+                list.innerHTML = '<p class="text-xs text-gray-400 text-center py-4">Память пуста</p>';
+            }
+        }
+
+        async function deleteMemory(id) {
+            await fetch(`/api/memory/${id}`, { method: 'DELETE' });
+            loadProfile();
+        }
+
+        function toggleMemoryToggle() {
+            memoryEnabled = !memoryEnabled;
+            updateMemoryToggleUI();
+        }
+
+        function updateMemoryToggleUI() {
+            const bg = document.getElementById('memory-toggle-bg');
+            const dot = document.getElementById('memory-toggle-dot');
+            if (memoryEnabled) {
+                bg.classList.replace('bg-zinc-200', 'bg-zinc-800');
+                dot.style.left = '24px';
+            } else {
+                bg.classList.replace('bg-zinc-800', 'bg-zinc-200');
+                dot.style.left = '2px';
+            }
+        }
+
+        function toggleNotifications() {
+            notificationsEnabled = !notificationsEnabled;
+            updateNotificationsToggleUI();
+        }
+
+        function syncModelWithSettings(val) {
+            // Only sync currentModelValue if no messages in chat
+            if (messagesContainer.children.length === 0) {
+                currentModelValue = val;
+                updateModelUI();
+                loadModels(); // Refresh checkmarks in dropdown
+            }
+        }
+
+        function updateNotificationsToggleUI() {
+            const bg = document.getElementById('notif-toggle-bg');
+            const dot = document.getElementById('notif-toggle-dot');
+            if (notificationsEnabled) {
+                bg.classList.replace('bg-zinc-200', 'bg-zinc-800');
+                dot.style.left = '24px';
+                } else {
+                bg.classList.replace('bg-zinc-800', 'bg-zinc-200');
+                dot.style.left = '2px';
+            }
+        }
+
+        async function saveSettings() {
+            const preferredModel = document.getElementById('param-preferred-model').value;
+            const data = {
+                system_prompt: document.getElementById('param-system').value,
+                prompt_template: document.getElementById('param-template').value,
+                temperature: parseFloat(document.getElementById('param-temp').value),
+                preferred_model: preferredModel,
+                memory_enabled: memoryEnabled,
+                notifications_enabled: notificationsEnabled
+            };
+            const res = await fetch('/api/profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                // Refresh models list to ensure checkmarks are updated if the model changed
+                await loadProfile();
+                await loadModels();
+                toggleSettings(false);
+            }
+        }
+
+        async function saveProfile() {
+            const name = document.getElementById('profile-name').value;
+            const res = await fetch('/api/profile', {
+                                    method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ custom_name: name })
+            });
+            if (res.ok) {
+                await loadProfile();
+                closeProfileModal();
+            }
+        }
+
+        async function uploadAvatar(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+            const res = await fetch('/api/profile/avatar', { method: 'POST', body: formData });
+            if (res.ok) loadProfile();
+        }
+
+        // --- ЛОГИКА ЧАТА ---
+        function monitorVideoProcessing(chatId) {
+            if (window.videoMonitorInterval) clearInterval(window.videoMonitorInterval);
+            
+            window.videoMonitorInterval = setInterval(async () => {
+                if (currentChatId !== chatId) {
+                    clearInterval(window.videoMonitorInterval);
+                    window.videoMonitorInterval = null;
+                    return;
+                }
+                
+                try {
+                    const res = await fetch(`/api/chats/${chatId}/messages`);
+                    const messages = await res.json();
+                    
+                    // Find if the video processing message is still there
+                    const processingMsg = messages.find(m => m.role === 'assistant' && m.content && m.content.includes('[VIDEO_PROCESSING]'));
+                    
+                    if (!processingMsg) {
+                        // Processing done! Reload chat
+                        clearInterval(window.videoMonitorInterval);
+                        window.videoMonitorInterval = null;
+                        
+                        // Check if the last message has memory update logic (though backend usually sends it in real-time response)
+                        // But since this was background task, we missed the immediate response.
+                        // We can just reload the chat messages.
+                        await loadChats(); 
+                        await selectChat(chatId);
+                    }
+                } catch (e) {
+                    console.error("Monitor error", e);
+                }
+            }, 3000);
+        }
+
+        async function askAI(topicPrompt) {
+            if (isGenerating) return;
+            const prompt = topicPrompt || userInput.value.trim();
+            if (!prompt && selectedFiles.length === 0) return;
+
+            welcomeScreen.style.display = 'none';
+            isGenerating = true;
+            userInput.value = '';
+            userInput.style.height = 'auto';
+            updateUIState();
+            
+            const currentFiles = [...selectedFiles];
+            selectedFiles = [];
+            renderFilePreviews();
+
+            // Use currentModelValue as the final model for this chat session if it's a new chat
+            const activeModel = currentModelValue;
+
+            // Append user message
+            appendMessage('user', prompt, currentFiles.filter(f => f.type.startsWith('image/')).map(f => f.url), currentFiles.filter(f => !f.type.startsWith('image/')).map(f => f.url));
+            
+            // AI Typing
+            const aiUI = appendMessage('ai', '');
+            // Check if video processing
+            const hasVideo = currentFiles.some(f => f.url && (f.url.includes('.mp4') || f.url.includes('.mov') || f.url.includes('.avi')));
+            if (hasVideo) {
+                aiUI.content.innerHTML = '<div id="video-processing"><div class="video-spinner"></div><span>Обрабатываю видео...</span></div>';
+            }
+
+            abortController = new AbortController();
+
+            try {
+                const res = await fetch('/api/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: abortController.signal,
+                    body: JSON.stringify({
+                        chat_id: currentChatId,
+                        message: prompt,
+                        model: activeModel,
+                        stream: true, // Request streaming if possible
+                        images: currentFiles.filter(f => f.type.startsWith('image/')).map(f => f.url),
+                        documents: currentFiles.filter(f => !f.type.startsWith('image/')).map(f => f.url)
+                    })
+                });
+                    
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+                // Handle streaming
+                if (res.headers.get('content-type')?.includes('application/x-ndjson')) {
+                    const reader = res.body.getReader();
+                    const decoder = new TextDecoder();
+                    let fullText = "";
+                    let displayedText = "";
+                    let textQueue = "";
+                    
+                    // Smooth printing function for streaming
+                    const printNext = async () => {
+                        if (textQueue.length > 0) {
+                            // Take a small chunk of characters to print
+                            const batchSize = Math.max(1, Math.floor(textQueue.length / 10));
+                            const toPrint = textQueue.substring(0, batchSize);
+                            textQueue = textQueue.substring(batchSize);
+                            displayedText += toPrint;
+                            aiUI.content.innerHTML = marked.parse(displayedText);
+                            // Highlight code blocks during streaming (only once per block)
+                            aiUI.content.querySelectorAll('pre code').forEach(el => {
+                                if (!el.dataset.highlighted) {
+                                    hljs.highlightElement(el);
+                                    el.dataset.highlighted = 'true';
+                                }
+                            });
+                            lucide.createIcons();
+                            if (isAutoScrolling) chatWindow.scrollTop = chatWindow.scrollHeight;
+                        }
+                        if (isGenerating || textQueue.length > 0) {
+                            requestAnimationFrame(printNext);
+                        }
+                    };
+                    
+                    // Start the smooth printer
+                    requestAnimationFrame(printNext);
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n');
+
+                        for (const line of lines) {
+                            if (!line.trim()) continue;
+                            try {
+                                const data = JSON.parse(line);
+                                const content = data.response || data.message?.content;
+                                if (content) {
+                                    textQueue += content;
+                                    fullText += content; // Keep track for final sync
+                                }
+                                // Handle memory update notification
+                                if (data.memory_updated) {
+                                    showMemoryNotification(data.count || 1);
+                                }
+                            } catch(e) {}
+                        }
+                    }
+                    // Wait for queue to empty
+                    while(textQueue.length > 0) await new Promise(r => setTimeout(r, 50));
+                    aiUI.content.innerHTML = marked.parse(fullText); // Final sync
+                    // Highlight code and recreate icons after final render
+                    aiUI.content.querySelectorAll('pre code').forEach(el => {
+                        if (!el.dataset.highlighted) {
+                            hljs.highlightElement(el);
+                            el.dataset.highlighted = 'true';
+                        }
+                    });
+                    lucide.createIcons();
+                } else {
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error);
+                    
+                    const content = data.content;
+                    let displayedText = "";
+                    
+                    if (data.processing_video) {
+                        aiUI.content.innerHTML = '<div id="video-processing"><div class="video-spinner"></div><span>Обрабатываю видео...</span></div>';
+                        monitorVideoProcessing(currentChatId);
+                        isGenerating = false;
+                        updateUIState();
+                        return;
+                    }
+                    
+                    // Check for memory update
+                    if (data.memory_updated) {
+                        showMemoryNotification(data.count || 1);
+                    }
+                    
+                    // Ultra-smooth word-by-word/char-by-char imitation
+                    const words = content.split(' ');
+                    for (let i = 0; i < words.length; i++) {
+                        displayedText += (i === 0 ? '' : ' ') + words[i];
+                        aiUI.content.innerHTML = marked.parse(displayedText);
+                        // Highlight code blocks during typing (only once per block)
+                        aiUI.content.querySelectorAll('pre code').forEach(el => {
+                            if (!el.dataset.highlighted) {
+                                hljs.highlightElement(el);
+                                el.dataset.highlighted = 'true';
+                            }
+                        });
+                        lucide.createIcons();
+                        if (isAutoScrolling) chatWindow.scrollTop = chatWindow.scrollHeight;
+                        
+                        // Small delay for smooth flow
+                        const delay = words[i].length > 10 ? 20 : 10;
+                        await new Promise(r => setTimeout(r, delay));
+                    }
+                    aiUI.content.innerHTML = marked.parse(content); // Final catch-all
+                    // Final highlight and icons
+                    aiUI.content.querySelectorAll('pre code').forEach(el => {
+                        if (!el.dataset.highlighted) {
+                            hljs.highlightElement(el);
+                            el.dataset.highlighted = 'true';
+                        }
+                    });
+                    lucide.createIcons();
+                }
+
+                aiUI.content.classList.remove('typing-cursor');
+                // Highlight all code blocks and recreate icons for copy buttons
+                aiUI.content.querySelectorAll('pre code').forEach(el => {
+                    if (!el.dataset.highlighted) {
+                        hljs.highlightElement(el);
+                        el.dataset.highlighted = 'true';
+                    }
+                });
+                lucide.createIcons(); // Recreate icons for copy buttons
+                await loadChats();
+                
+                // Update title
+                const chatsRes = await fetch('/api/chats');
+                const chats = await chatsRes.json();
+                const currentChat = chats.find(c => c.id == currentChatId);
+                if (currentChat) chatTitle.innerText = currentChat.title || 'dreamAI';
+
+            } catch (e) {
+                if (e.name === 'AbortError') {
+                    aiUI.content.innerHTML += '<p class="text-gray-400 italic">Генерация остановлена.</p>';
+                } else {
+                    aiUI.content.innerHTML = `<span class="text-red-500">Ошибка: ${e.message}</span>`;
+                }
+                aiUI.content.classList.remove('typing-cursor');
+            } finally {
+                isGenerating = false;
+                abortController = null;
+                updateUIState();
+            }
+        }
+
+        function appendMessage(role, content, images = [], docs = []) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} w-full animate-fade-in mb-8`;
+            
+            let imagesHtml = '';
+            if (images && images.length > 0) {
+                imagesHtml = `<div class="flex flex-wrap gap-2 mb-2">${images.map(img => `<img src="${img}" class="max-w-[200px] rounded-lg border border-border">`).join('')}</div>`;
+            }
+
+            let docsHtml = '';
+            if (docs && docs.length > 0) {
+                docsHtml = `<div class="flex flex-wrap gap-2 mb-2">${docs.map(doc => `
+                    <div class="flex items-center gap-2 bg-zinc-100 px-3 py-1.5 rounded-xl border border-border text-xs font-medium">
+                        <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                        <span>${doc.split('/').pop().split('_').pop()}</span>
+                    </div>`).join('')}</div>`;
+            }
+
+            if (role === 'user') {
+                wrapper.innerHTML = `
+                    <div class="max-w-[85%] bg-notion-secondary px-4 py-2.5 rounded-[20px] text-[#1a1a1a] shadow-sm">
+                        ${imagesHtml}
+                        ${docsHtml}
+                        <div class="whitespace-pre-wrap text-[15px] leading-relaxed">${content}</div>
+                    </div>
+                `;
+                } else {
+                let innerContent = '';
+                if (content && content.includes('[VIDEO_PROCESSING]')) {
+                    innerContent = '<div id="video-processing"><div class="video-spinner"></div><span>Обрабатываю видео...</span></div>';
+                    if (!window.videoMonitorInterval) monitorVideoProcessing(currentChatId);
+                } else {
+                    innerContent = `<div class="response-content prose prose-sm text-gray-800 max-w-none">${marked.parse(content || '')}</div>`;
+                }
+                
+                wrapper.innerHTML = `
+                    <div class="max-w-full w-full flex gap-4">
+                        <img src="https://api.dreampartners.online/icons/ai/logo.svg" class="w-6 h-6 mt-1 rounded-lg shadow-sm shrink-0">
+                        <div class="flex-1 overflow-hidden">
+                            ${innerContent}
+                        </div>
+                    </div>
+                `;
+            }
+
+            messagesContainer.appendChild(wrapper);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            lucide.createIcons();
+            
+            if (role === 'user') {
+                return wrapper;
+            } else {
+                const contentEl = wrapper.querySelector('.response-content');
+                return { content: contentEl, wrapper: wrapper };
+            }
+        }
+
+        // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
+        function updateUIState() {
+            if (isGenerating) {
+                sendBtn.classList.add('hidden');
+                stopBtn.classList.remove('hidden');
+                            } else {
+                sendBtn.classList.remove('hidden');
+                stopBtn.classList.add('hidden');
+                }
+            const hasInput = userInput.value.trim().length > 0 || selectedFiles.length > 0;
+            if (hasInput) {
+                sendBtn.classList.remove('opacity-50', 'pointer-events-none');
+                            } else {
+                sendBtn.classList.add('opacity-50', 'pointer-events-none');
+            }
+        }
+
+        function stopGeneration() {
+            if (abortController) abortController.abort();
+            isGenerating = false;
+            updateUIState();
+        }
+
+        function showMemoryNotification(count) {
+            const notif = document.getElementById('memory-notification');
+            if (notif) {
+                notif.classList.add('show');
+                                setTimeout(() => {
+                    notif.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        userInput.addEventListener('input', () => {
+            userInput.style.height = 'auto';
+            userInput.style.height = Math.min(userInput.scrollHeight, 200) + 'px';
+            updateUIState();
+        });
+
+        userInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askAI(); }
+        });
+
+        chatWindow.addEventListener('scroll', () => {
+            const threshold = 100;
+            isAutoScrolling = chatWindow.scrollHeight - chatWindow.scrollTop - chatWindow.clientHeight < threshold;
+        });
+
+        function handleFileUpload(e) {
+            const files = Array.from(e.target.files);
+            files.forEach(async file => {
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const type = file.type.startsWith('image/') ? 'image' : 'document';
+                const endpoint = type === 'image' ? '/api/upload/image' : '/api/upload/document';
+                
+                try {
+                    const res = await fetch(endpoint, { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.url) {
+                        selectedFiles.push({ file, type: file.type, url: data.url, name: file.name });
+                        renderFilePreviews();
+                        updateUIState();
+                    }
+                } catch (err) { console.error("Upload error", err); }
+            });
+        }
+
+        function renderFilePreviews() {
+            const cont = document.getElementById('file-preview-container');
+            cont.innerHTML = selectedFiles.map((f, i) => `
+                <div class="relative w-16 h-16 rounded-xl overflow-hidden border border-border group animate-fade-in">
+                    ${f.type.startsWith('image/') ? `<img src="${f.url}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-zinc-100 flex items-center justify-center"><i data-lucide="file-text" class="w-6 h-6 text-gray-400"></i></div>`}
+                    <button onclick="selectedFiles.splice(${i},1);renderFilePreviews();updateUIState();" class="absolute inset-0 bg-black/40 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        async function loadWelcomeTopics() {
+            try {
+                const res = await fetch('/api/chat/topics');
+                const topics = await res.json();
+                const cont = document.getElementById('welcome-topics');
+                cont.innerHTML = topics.map(t => `
+                    <div class="bento-card hover:bg-notion-hover cursor-pointer text-left group transition-all" onclick="askAI('${t.prompt}')">
+                        <h4 class="font-bold text-sm mb-1 group-hover:text-black text-gray-700">${t.title}</h4>
+                        <p class="text-xs text-gray-400">${t.desc}</p>
+                </div>
+            `).join('');
+            } catch (e) { console.error("Error loading topics", e); }
+        }
+
+        function toggleSidebar(show) {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (show) { sidebar.classList.add('open'); overlay.classList.remove('hidden'); }
+            else { sidebar.classList.remove('open'); overlay.classList.add('hidden'); }
+        }
+
+        function toggleSettings(show) { document.getElementById('settings-modal').classList.toggle('hidden', !show); }
+        function openProfileModal() { document.getElementById('profile-modal').classList.remove('hidden'); loadProfile(); }
+        function closeProfileModal() { document.getElementById('profile-modal').classList.add('hidden'); }
+
+        let chatToDelete = null;
+        function openDeleteModal(id) {
+            chatToDelete = id;
+            document.getElementById('delete-modal').classList.remove('hidden');
+            document.getElementById('delete-modal').classList.add('flex');
+            document.getElementById('confirm-delete-btn').onclick = () => {
+                deleteChat(chatToDelete);
+                closeDeleteModal();
+            };
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            document.getElementById('delete-modal').classList.remove('flex');
+            chatToDelete = null;
+        }
+
+        init();
+    </script>
+</body>
+</html>

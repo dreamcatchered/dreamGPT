@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dreamAI | Бесплатные нейросети без ограничений</title>
+    <meta name="description" content="Первый сервис с нейросетью, понимающей видео. Множество моделей, абсолютно бесплатно и без лимитов. Постоянные обновления.">
+    <meta name="keywords" content="dreamAI, нейросети, бесплатно, GPT-4, анализ видео, AI, искусственный интеллект, без лимитов">
+    <meta property="og:title" content="dreamAI | Бесплатные нейросети без ограничений">
+    <meta property="og:description" content="Анализ видео, генерация текста, множество моделей. Полностью бесплатно.">
+    <meta property="og:url" content="https://ai.dreampartners.online">
+    <meta property="og:type" content="website">
+    <link rel="canonical" href="https://ai.dreampartners.online">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="https://api.dreampartners.online/icons/ai/logo.svg">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://api.dreampartners.online/icons/ai/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://api.dreampartners.online/icons/ai/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://api.dreampartners.online/icons/ai/apple-touch-icon.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700&family=Syncopate:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #000000;
+            --acc: #666666;
+            --border: #e5e5e5;
+            --card-bg: #f9f9f9;
+            --input-bg: #ffffff;
+            --user-msg-bg: #f0f0f0;
+            --ai-msg-bg: #ffffff;
+            --accent-color: #000000;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: 'Manrope', sans-serif;
+            overflow-x: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Typography */
+        h1 {
+            font-family: 'Syncopate', sans-serif;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 0.9;
+        }
+
+        .hero-split {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            height: 100vh;
+            width: 100%;
+            position: relative;
+        }
+
+        /* Left Side */
+        .hero-left {
+            padding: 40px; /* Reduced padding to fit better */
+            display: flex;
+            flex-direction: column;
+            /* justify-content: center; - Removed to allow custom spacing */
+            border-right: 1px solid var(--border);
+            position: relative;
+            z-index: 2;
+            background: var(--bg);
+            height: 100%; /* Ensure it fills height */
+        }
+
+        .logo {
+            position: absolute;
+            top: 30px;
+            left: 40px;
+            font-family: 'Syncopate', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .title-wrapper {
+            margin-bottom: 20px;
+            margin-top: 15vh; /* Adjusted to fit better */
+        }
+
+        .big-title {
+            font-size: clamp(2.5rem, 4vw, 5rem); /* Slightly smaller min/max */
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #000 0%, #666 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            line-height: 1.6;
+            max-width: 500px;
+            font-weight: 300;
+            margin-bottom: 50px;
+        }
+
+        .auth-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 40px;
+            background: var(--fg);
+            color: var(--bg);
+            text-decoration: none;
+            font-family: 'Syncopate', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            width: fit-content;
+        }
+
+        .auth-btn:hover {
+            background: #333;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .stats {
+            margin-top: auto;
+            display: flex;
+            gap: 60px;
+            border-top: 1px solid var(--border);
+            padding-top: 30px;
+        }
+
+        .stat-item .num {
+            display: block;
+            font-family: 'Syncopate', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-item .label {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Right Side - Chat Demo */
+        .hero-right {
+            background: var(--card-bg);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-interface {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            margin-bottom: 30px;
+            min-height: 300px;
+        }
+
+        .message {
+            display: flex;
+            gap: 16px;
+            max-width: 90%;
+            animation: slideUp 0.5s ease-out;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            background: #333;
+            color: #ffffff; /* White icon */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .message.ai .avatar {
+            background: var(--fg);
+            color: var(--bg);
+        }
+
+        .bubble {
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            line-height: 1.6;
+            background: var(--ai-msg-bg);
+            border: 1px solid var(--border);
+        }
+
+        .message.user .bubble {
+            background: var(--user-msg-bg);
+            border-color: transparent;
+        }
+
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 10px 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            background: #666;
+            border-radius: 50%;
+            animation: blink 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+
+        /* Input Mockup */
+        .input-mockup {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: auto;
+            position: relative;
+        }
+
+        .input-text {
+            flex: 1;
+            color: var(--fg);
+            font-size: 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            /* border-right: 2px solid transparent; - Remove from here */
+        }
+
+        .cursor-blink::after {
+            content: '|';
+            color: var(--fg);
+            animation: cursor 0.7s infinite;
+            margin-left: 2px;
+        }
+
+        @keyframes cursor {
+            50% { opacity: 0; }
+        }
+
+        .send-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--fg);
+            color: var(--bg);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+
+        .send-icon.active {
+            opacity: 1;
+        }
+
+            /* Responsive */
+        @media (max-width: 1024px) {
+            .hero-split {
+                grid-template-columns: 1fr;
+                height: auto;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+            }
+            .hero-left {
+                padding: 30px 20px;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                min-height: auto;
+                flex: 0 0 auto;
+            }
+            .logo {
+                position: relative;
+                top: 0;
+                left: 0;
+                margin-bottom: 40px;
+            }
+            .title-wrapper {
+                margin-top: 0;
+            }
+            .hero-right {
+                height: 500px;
+                padding: 20px;
+                flex: 1;
+            }
+            .big-title {
+                font-size: 2.5rem;
+            }
+            .stats {
+                gap: 30px;
+                padding-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-split">
+        <!-- Left Side -->
+        <div class="hero-left">
+            <div class="logo">
+                <i class="ph-fill ph-asterisk-simple"></i> dreamAI
+            </div>
+
+            <div class="title-wrapper">
+                <h1 class="big-title">
+                    INTELLIGENCE<br>
+                    REDEFINED
+                </h1>
+                <p class="subtitle">
+                    У нас много моделей и все абсолютно бесплатно — без лимитов! Первый сервис с нейросетью, понимающей видео: отправьте ролик и получите краткое содержание. Постоянное обновление списка нейросетей. Работает на энтузиазме создателя. Никакой рекламы и платежей.
+                </p>
+                
+                <a href="/auth/login" class="auth-btn">
+                    Начать работу <i class="ph ph-arrow-right"></i>
+                </a>
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="num">MANY</span>
+                    <span class="label">Models</span>
+                </div>
+                <div class="stat-item">
+                    <span class="num">VIDEO</span>
+                    <span class="label">Analysis</span>
+                </div>
+                <div class="stat-item">
+                    <span class="num">FREE</span>
+                    <span class="label">Unlimited</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side (Chat Animation) -->
+        <div class="hero-right">
+            <div class="chat-interface">
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Messages will be injected here -->
+                </div>
+                
+                <div class="typing-indicator" id="ai-typing">
+                    <span></span><span></span><span></span>
+                </div>
+
+                <div class="input-mockup">
+                    <div class="input-text" id="typewriter-text"></div>
+                    <div class="send-icon" id="send-icon">
+                        <i class="ph-fill ph-paper-plane-right"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const scenarios = [
+            {
+                user: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                ai: "Я посмотрела видео по ссылке. \n\nЭто музыкальный клип Rick Astley - Never Gonna Give You Up.\n\nКраткое содержание:\n1. Исполнитель танцует в разных локациях.\n2. Текст песни обещает вечную преданность.\n3. Видео является культурным феноменом (Rickroll)."
+            },
+            {
+                user: "Проанализируй тренды AI на 2025 год",
+                ai: "В 2025 году ключевыми трендами станут мультимодальные агенты, способные видеть и слышать в реальном времени, а также персонализированные SLM (Small Language Models) для локальных устройств. Интеграция AI в бизнес-процессы перейдет от чат-ботов к автономным системам принятия решений."
+            },
+            {
+                user: "Создай структуру лендинга для стартапа",
+                ai: "Конечно. Вот структура: 1. Hero-секция с уникальным торговым предложением (UVP). 2. Блок 'Проблема-Решение'. 3. Демонстрация продукта (интерактив). 4. Социальное доказательство (метрики, логотипы). 5. CTA (Call to Action)."
+            }
+        ];
+
+        let currentScenario = 0;
+        const typeSpeed = 50;
+        const aiSpeed = 20;
+        const inputEl = document.getElementById('typewriter-text');
+        const messagesEl = document.getElementById('chat-messages');
+        const sendIcon = document.getElementById('send-icon');
+        const aiTyping = document.getElementById('ai-typing');
+
+        function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
+        async function typeText(text) {
+            inputEl.textContent = '';
+            inputEl.classList.add('cursor-blink');
+            sendIcon.classList.remove('active');
+            
+            for (let i = 0; i < text.length; i++) {
+                inputEl.textContent += text[i];
+                await wait(typeSpeed + Math.random() * 30);
+            }
+            
+            await wait(500);
+            // Keep cursor blinking for a moment before "sending"
+            // inputEl.classList.remove('cursor-blink'); 
+            sendIcon.classList.add('active');
+            await wait(500);
+            
+            // "Send"
+            inputEl.classList.remove('cursor-blink'); // Remove cursor before clearing
+            inputEl.textContent = '';
+            sendIcon.classList.remove('active');
+            addMessage(text, 'user');
+        }
+
+        function addMessage(text, role) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${role}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            avatar.innerHTML = role === 'user' ? '<i class="ph ph-user"></i>' : '<i class="ph-fill ph-asterisk-simple"></i>';
+            
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            
+            if (role === 'ai') {
+                // For AI, we stream the text
+                msgDiv.appendChild(avatar);
+                msgDiv.appendChild(bubble);
+                messagesEl.appendChild(msgDiv);
+                streamText(bubble, text);
+            } else {
+                bubble.textContent = text;
+                msgDiv.appendChild(bubble);
+                msgDiv.appendChild(avatar);
+                messagesEl.appendChild(msgDiv);
+            }
+        }
+
+        async function streamText(element, text) {
+            // Hide typing indicator
+            aiTyping.style.opacity = '0';
+            
+            for (let i = 0; i < text.length; i++) {
+                element.textContent += text[i];
+                // Scroll to bottom if needed
+                const container = document.querySelector('.chat-interface');
+                // container.scrollTop = container.scrollHeight; 
+                await wait(aiSpeed);
+            }
+            
+            await wait(2000); // Wait before next scenario
+            nextScenario();
+        }
+
+        async function playScenario() {
+            const scenario = scenarios[currentScenario];
+            
+            // Clear previous messages if too many
+            if (messagesEl.children.length > 3) {
+                messagesEl.innerHTML = '';
+            }
+
+            // 1. User types
+            await typeText(scenario.user);
+            
+            // 2. AI thinks
+            aiTyping.style.opacity = '1';
+            await wait(1500);
+            
+            // 3. AI responds
+            addMessage(scenario.ai, 'ai');
+        }
+
+        function nextScenario() {
+            currentScenario = (currentScenario + 1) % scenarios.length;
+            playScenario();
+        }
+
+        // Start
+        setTimeout(playScenario, 1000);
+
+    </script>
+</body>
+</html>

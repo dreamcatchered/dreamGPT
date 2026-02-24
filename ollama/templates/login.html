@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в AI Assistant 2025</title>
+    
+    <style>
+        /* --- FONTS --- */
+        @font-face {
+            font-family: 'Inter';
+            src: local('Inter'), local('Segoe UI'), local('Roboto'), sans-serif;
+            font-weight: 300 600;
+        }
+
+        :root {
+            --bg-body: #ffffff;
+            --text-main: #111111;
+            --text-secondary: #666666;
+            --border-color: #e5e5e5;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --radius-md: 12px;
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            box-shadow: var(--shadow-md);
+            background: #fff;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #333;
+            display: inline-block;
+        }
+        
+        /* Simple Asterisk SVG or char */
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            fill: currentColor;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 32px;
+        }
+
+        .login-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 14px;
+            background: #000;
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .login-btn:hover {
+            background: #333;
+        }
+        
+        .login-btn:active {
+            transform: scale(0.98);
+        }
+
+        .dream-logo {
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="logo">
+            <!-- Simple Asterisk shape -->
+            <svg class="logo-icon" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+                <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm45.66,109.66-32,32a8,8,0,0,1-11.32-11.32l18.34-18.34H88a8,8,0,0,1,0-16h60.69l-18.35-18.34a8,8,0,0,1,11.32-11.32l32,32A8,8,0,0,1,173.66,133.66Z" fill="none"></path> <!-- Placeholder path -->
+                <circle cx="128" cy="128" r="128" fill="black"/>
+                <path d="M80,128h96 M128,80v96 M94,94l68,68 M162,94l-68,68" stroke="white" stroke-width="16" stroke-linecap="round"/>
+            </svg>
+        </div>
+        <h1>Добро пожаловать</h1>
+        <p>Войдите, чтобы синхронизировать историю чатов</p>
+
+        <a href="/auth/login" class="login-btn">
+            Войти через <span class="dream-logo">dreamID</span>
+        </a>
+    </div>
+
+    <footer>
+        © 2025 AI Assistant Inc.
+    </footer>
+
+</body>
+</html>
+
+
